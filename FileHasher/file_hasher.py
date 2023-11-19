@@ -116,7 +116,7 @@ class FileHasher:
 					h_sha512.update(chunk)
 		return h_sha512.hexdigest()
 
-class FileReadWriteUtility(SHAGenerator):
+class FileReadWriteUtility(FileExtractor):
 	"""
 	
 	"""
@@ -127,9 +127,10 @@ class FileReadWriteUtility(SHAGenerator):
 		Return:
 			file: a csv file 
 		"""
-		output_file = open(self.output_file_name, '+a')
+		output_file = open(self.output_file_name, 'w')
 		output_file.write('filepath,sha512\n')
-		for path in path_to_files:
+
+		for path in self.get_file_paths():
 			sha512_text = generate_sha512(path)
 			output_file.write(f'{path_file},{sha512_text}\n')
 		output_file.close()
