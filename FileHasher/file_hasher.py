@@ -4,36 +4,68 @@ import os
 
 from pathlib import Path
 
-class SHAGenerator:
+
+class FileHasher:
 	"""
-	Class for generating SHA hashes for files in a given directory tree and outputting
-    the results to a CSV file.
+	Generates SHA hashes for files of specific extensions in
+	a given directory tree and outputting the results to a CSV file.
 	"""
-	def __init__(self, root_directory: Path, output_file_name: Path) -> None:
+	def __init__(self, root_directory: Path, output_file_name: Path, extensions: list[str]) -> None:
 		"""
-		Initializer for class SHAGenerator.
+		Initializer for class FileHasher.
 		
 		:param root_directory: Path object representing the root directory.
 		:param output_file_name: Path object representing the output file name.
+		:param extensions: List of favorale file extensions.
 		"""
 		self.root_directory = root_directory
 		self.output_file_name = output_file_name
+		self.extensions = extensions
+		#TODO: make it possible to read it from a file also
 		
 		if not os.path.isdir(self.root_directory):
-			 raise ValueError(f'{root_directory} is not a valid directory!')
+			 raise ValueError(f'{self.root_directory} is not a valid directory!')
 
-		if not Path(self.output_file_name).suffix.lower() == '.csv': 
-			raise ValueError(f'{output_file_name} does not have a csv extension!')
+		if Path(self.output_file_name).suffix.lower() != '.csv': 
+			raise ValueError(f'{self.output_file_name} does not have a csv extension!')
+		
+		if not self.extensions:
+			raise ValueError(f'Expected non-empty list of file extensions!')
 
+	@staticmethod
+	def generate_sha512(file_path: Path, chunk_size: int = 256) -> str:
+		"""
+		Generates a SHA-512 hash for the given file.
+		
+		Args:
+			file_path (Path): Path to the file for which the hash is to be generated.
+			chunk_size (int, optional): Size of each chunk read from the file.
+									Default is 256 bytes.
+		
+		Returns:
+			str: The SHA-512 hash digest of the file.
+		"""
+		hl_sha512 = hashlib.sha512()
+		try:
+			with open(file_path, 'rb') as infile:
+				while True:
+					chunk = infile.read(chunk_size)
+					if not chunk:
+						break
+					hl_sha512.update(chunk)
+		except OSError as e:
+			raise OSError(f"Error reading file {file_path}: {e}")
+
+		return hl_sha512.hexdigest()
 
 class FileExtractor(SHAGenerator):
 	"""
-	Class for extracting all files found in a directory tree.
+	Extracts all files found in the given directory tree.
 	
 	It scans a directory tree, identifying files with determined extensions.
 	It then returns a list of file paths that match those extensions.
 	
-	Usage:
+	Exampe Usage:
 		extractor = FileExtractor(root_directory='/path/to/directory', extensions='.txt')
         file_paths = extractor.get_file_paths()
 	"""
@@ -73,7 +105,7 @@ class FileExtractor(SHAGenerator):
 		Returns:
 			bool: if file is in the extensionList returns True.
 		"""
-		file_suffix = Path(file_name).suffix.lower()
+		file_suffix: str = Path(file_name).suffix.lower()
 		return (file_suffix in cls.extensionList)
 
 
@@ -92,29 +124,6 @@ class FileExtractor(SHAGenerator):
 					file_paths.append(Path(os.path.join(dirpath, filename)))
 		return file_paths
 
-class FileHasher:
-	"""
-	Class for generating hash digests of files using Secure Hash Algorithm (SHA).
-	"""
-	@staticmethod
-	def generate_sha512(file_path: Path) -> str:
-		"""
-		Generates a SHA-512 hash for the given file.
-		
-        Args:
-            file_path (Path): Path to the file for which the hash is to be generated.
-
-        Returns:
-            str: The SHA-512 hash digest of the file.
-		"""
-		#TODO: Reading the file in chunks is a good practice for large files, but the current implementation reads the entire file in one go (infile.read() without a size argument). Specify a chunk size for better memory efficiency.
-		h_sha512 = hashlib.sha512()
-		with open(file_path, 'rb') as infile:
-				chunk = 0
-				while chunk != b'':
-					chunk = infile.read()
-					h_sha512.update(chunk)
-		return h_sha512.hexdigest()
 
 class FileReadWriteUtility(FileExtractor):
 	"""
@@ -134,6 +143,8 @@ class FileReadWriteUtility(FileExtractor):
 			sha512_text = generate_sha512(path)
 			output_file.write(f'{path_file},{sha512_text}\n')
 		output_file.close()
+
+
 
 if __name__ == "__main__":
 	results = FileExtractor('.', output_file_name='hash.csv').get_file_paths()
