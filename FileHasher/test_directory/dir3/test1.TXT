@@ -1,0 +1,13 @@
+Sample Text File
+
+This is an example of a text file. It contains only plain text characters without any formatting, such as bold or italic.
+
+Text files are often used for logs, configuration files, and plain text content.
+
+Here are a few points about text files:
+
+- They are simple and easy to read.
+- They can be opened with any text editor like Notepad, TextEdit, or VS Code.
+- Text files typically have a ".txt" file extension.
+
+Have a great day!

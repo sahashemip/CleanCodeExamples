@@ -1,80 +1,28 @@
-import shutil
-import tempfile
 import unittest
-
+from unittest.mock import patch
 from pathlib import Path
-from file_hasher import (SHAGenerator, FileExtractor,
-                         FileHasher, FileReadWriteUtility)
-
-
-class TestSHAGenerator(unittest.TestCase):
-	def test_init_valid_directory(self):
-		"""
-		Test initialization with a valid directory.
-		"""
-		generator = SHAGenerator(Path('.'), Path('output.csv'))
-		self.assertEqual(generator.root_directory, Path('.'))
-		self.assertEqual(generator.output_file_name, Path('output.csv'))
-	
-	def test_init_invalid_directory(self):
-		"""
-		Test initialization with a invalid directory.
-		"""
-		with self.assertRaises(ValueError):
-			SHAGenerator(Path('/non/existent/path'), Path('output.csv'))
-
-	def test_init_invalid_file_extension(self):
-		"""
-		Test initialization with an invalid file extension
-		"""
-		with self.assertRaises(ValueError):
-			SHAGenerator(Path('.'), Path('output.txt'))
-
+from file_hasher import FileExtractor
 
 class TestFileExtractor(unittest.TestCase):
+
     def setUp(self):
-        self.temp_dir = tempfile.mkdtemp()
+        self.test_directory = Path(".")  # Replace with a suitable test path
+        self.test_output_file = Path("./test_directory/output.csv")    # Replace with a suitable test path
+        self.test_extensions = ['.txt', '.md']
 
-        sample_files = ['file1.txt', 'file2.exe', 'file3.html', 'file4.mp3']
-        for file in sample_files:
-        	open(Path(self.temp_dir)/file, 'w').close()
-  
-        self.extractor = FileExtractor(Path(self.temp_dir), Path('output.csv'))
+    def test_initialization_valid(self):
+        extractor = FileExtractor(self.test_directory, self.test_output_file, self.test_extensions)
+        self.assertEqual(extractor.root_directory, self.test_directory)
+        self.assertEqual(extractor.output_file_name, self.test_output_file)
+        self.assertEqual(extractor.extensions, self.test_extensions)
 
-    def test_get_file_paths(self):
-        """ Test the extraction of file paths """
-        extractor = FileExtractor(self.temp_dir, Path('output.csv'))
-        paths = extractor.get_file_paths()
+    def test_initialization_invalid_directory(self):
+        with self.assertRaises(ValueError):
+            FileExtractor(Path("./invalid_path"), self.test_output_file, self.test_extensions)
 
-    def test_add_extension(self):
-        """ Test adding a new file extension """
-        self.assertTrue(FileExtractor.add_extension('.test'))
-        self.assertIn('.test', FileExtractor.get_file_extensions())
-
-    def test_is_favored_file(self):
-        """ Test if a file is favored based on extension """
-        self.assertTrue(FileExtractor.is_favored_file('file.exe'))
-
-    def tearDown(self):
-        shutil.rmtree(self.temp_dir)
-
-class TestFileHasher(unittest.TestCase):
-    def test_generate_sha512(self):
-        """ Test SHA-512 hash generation """
-        temp_file_path = Path('test.txt')
-        temp_hash = FileHasher.generate_sha512(temp_file_path)
-        expected_hash = ('807e8ff949e61d23f5ee42a629ec96e9fc526b62f030'
-						'cd70ba2cd5b9d97935461eacc29bf58bcd0426e9e'
-						'1fdb0eda939603ed52c9c06d0712208a15cd582c60e')
-        self.assertEqual(temp_hash, expected_hash)
-
-
-class TestFileReadWriteUtility(unittest.TestCase):
-	def test_write_hash(self):
-		""" Test writing hashes to a CSV file """
-		utility = FileReadWriteUtility(Path('.'), Path('test.csv'))
-		utility.write_hash()
-
+    def test_initialization_invalid_output_file(self):
+        with self.assertRaises(ValueError):
+            FileExtractor(self.test_directory, Path("./test_directory_2/output.txt"), self.test_extensions)
 
 if __name__ == '__main__':
     unittest.main()
