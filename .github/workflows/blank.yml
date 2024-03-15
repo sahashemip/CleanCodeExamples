@@ -4,5 +4,5 @@ jobs:
   job1:
     runs-on: ubuntu-latest
     steps:
-      - name Step1
-      run: echo "This is the first step of job1"   
+      - name: Step1
+        run: echo "This is the first step of job1"   
